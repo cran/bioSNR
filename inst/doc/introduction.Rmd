@@ -1,0 +1,255 @@
+---
+title: "bioSNR: An Introduction to the Physics Behind Bioacoustics"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{bioSNR: An Introduction to the Physics Behind Bioacoustics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+author: Matthew Duggan
+nocite: '@*'
+bibliography: ref_intro.bib 
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The bioSNR package is an open-source solver of the passive SOund NAvigation and Ranging (SONAR) equation. The calculator is capable of handling simple-level acoustic problems associated with bioacoustics and passive acoustic monitoring (PAM) systems.
+
+This document gives quick examples of bioSNR's more basic capabilities and functions while introducing some of the basic physics behind sound.
+
+```{r setup, eval=FALSE}
+#Stable - Install package from CRAN 
+install.packages("bioSNR")
+
+#Unstable - Install package from Github repository 
+devtools::install_github("MattyD797/bioSNR")
+
+#Attach package namespace to active libraries in Rstudio
+library(bioSNR)
+```
+
+```{r setupR, eval=TRUE, include=FALSE}
+library(bioSNR)
+```
+
+### Sound wave: frequency and wavelength
+
+A acoustic wave is a mechanical wave with longitudinal propagation. It means that under the influence of a wave (e.g., issued from a sound source)
+the particles of a medium (e.g. air, water) oscillate parallel to the direction of propagation of the wave, propagating the perturbation.
+This movement of particles results in repeated patterns of *compression* and *dilatation* around the value of ambient pressure, resulting in a travelling pressure wave [@key3].
+Along with the majority of organisms, our hearing is based on these pressure changes, but some species (mainly fish and squid) rely on the motion of the particles.
+Therefore, we typically only measure sounds through small pressure changes, in Pascals (Pa).
+
+For simplicity we often describe acoustics variables in relation with the illustration of sinusoid, the simplest waveform,
+where this oscillation exist both in space (for simplicity along one dimension) and in time.
+The period is the time interval between the successive occurrence of the same state in this oscillation. The frequency,
+(or pitch) is the number oscillations produced in one second represented by the unit Hertz (Hz).
+In reference to human hearing range, sound with a frequency below 20 Hz is *infrasound* and sound above 20kHz is *ultrasound*.
+The wavelength is the distance between successive crests if a wave and is measured in meters (m).
+
+The relationship between the length of a wavelength and the frequency can be represented as
+
+$$\lambda = \frac{c}{f}$$,
+where,
+* $\lambda$ is the wavelength (m),
+* $c$ is speed of sound in (m/s)  and,
+* $f$ frequency in Hz (cycles per second). 
+
+By using this equation, the wof() function allows you to calculate either $\lambda$ or the $f$. — whichever your value of interest is. The first entry defaults to either $\lambda$ or $f$ — whichever value you already have. In the second position, you must set the c argument equal to the constant of sound speed in water or air.
+
+You may calculate your own value for c relative to the conditions present in your ecosystem of study. As a general rule of thumb, however, c is equal to 1500 m/s in saltwater and 350 m/s in air. Note that the distinction between freshwater and saltwater is important. Sound speed is faster in saltwater than freshwater. 
+
+#### Examples
+
+1. Toothed whales like dolphins often use ultrasonic signals for a range of important behaviors, such as communication. What is the wavelength of a false killer whale broadband click at 40 kHz?
+
+```{r wof1}
+#Find the wavelength (m) given a sound level of 75 kHz (75000 Hz) in SALTWATER
+wof(40000, c=15000)
+```
+
+* The wavelength is 0.375 m. 
+
+2. Bats produce ultrasonic sounds to find prey, such as the invasive mosquito. What is the frequency of a sheath-tailed bat echolocation that has a wavelength of 0.012?
+
+```{r wof2}
+#Find the frequency (Hz) given a wavelength of 0.015 in AIR
+wof(0.012, c=350)
+```
+
+* The frequency is ~29 kHz. 
+
+### Speed of Sound
+
+While a sound wave travels similarly no matter its medium, different media still have different physical properties that alter the wave's speed. The speed of a wave is influenced dynamic ecosystem conditions. In air, the parameters that influence sound speed are temperature, humidity, and wind speed. In water, the parameters are temperature, depth, and salinity. Nonetheless, on average, sound travels ~340 $\frac{m}{s}$ in air and ~1500 $\frac{m}{s}$ in salt water.
+
+The formula to find sound speed in the _ocean_ [@key9] is
+
+$$ c = 1449.2 + 4.6t – 0.055t^2 + 0.00029t^3 + (1.34-0.010t) * (s-35) + 0.0165z $$
+where,
+* $c$ is sound speed in $\frac{m}{s}$
+* $t$ is temperature in °C
+* $s$ is salinity in parts per thousand (ppt)
+* $z$ is depth in m
+
+The formula to find sound speed in _air_ is
+
+$$ c = 331 + 0.6t $$
+where,
+* $c$ is sound speed in $\frac{m}{s}$
+* $t$ is temperature in °C
+
+The first entry corresponds to temperature. The second entry, either denote “water” or “air” for sound speed default. The third entry corresponds to salinity, while the fourth entry corresponds to depth. 
+
+#### Example
+
+1. How does the speed of airborne sound compare between Hawai'i (23°C) and a polar-like
+region, such as Ithaca, NY (3°C)?
+
+```{r soundSpeed1}
+#Speed of sound in air at 23°C 
+soundSpeed(23)
+#Speed of sound in air at 3°C 
+soundSpeed(3)
+```
+* In air, sound is 12 $\frac{m}{s}$ faster in Hawai'i (23°C) compared to Ithaca, NY (3°C). 
+
+2. How fast will a black durgon warning call travel in 30°C water with a salinity of 35 ppt and a depth of 10 meters?
+
+```{r soundSpeed2}
+#Speed of fish sound in saltwater
+soundSpeed(30, "water", 35, 10)
+```
+* In water, the call will travel at the speed of 1545.695 $\frac{m}{s}$. 
+
+### Sound Reflection, Transmission, and Refraction
+
+As a sound wave travels through a medium, it will be dynamically reflected and refracted. Reflection is like a ball bouncing off the ground in which the energy of a sound is directed into another direction by an object. Sound enters water from air at the critical angle of 15° at the air-water boundary -- or the place where the surface of water meets air. Refraction is when sound changes speed after crossing into a different medium, such as when a sound from air enters the water. Refraction can also occur when sound changes speed in a medium with varying conditions, such as when temperature shifts through the water column in the ocean.
+The angle and longitudinal wave velocity of this new direction from reflection can be calculated utilizing Snell's law, where reflection angle is represented as $\Theta_1$ and refraction angle is represented as $\Theta_2$: 
+
+$$ \frac{\sin\Theta_1}{{V_L}_1} = \frac{\sin\Theta_2}{{V_L}_2} $$
+where,
+* $c_1$ and $c_2$ are the sounds speeds in medium 1 and 2 given in $\frac{m}{s}$
+* $theta_1$ and $theta_2$ are the angles of incidence and refraction in °
+
+#### Examples
+
+1. Calculate the reflection angle given the angle of a black-tailed godwit sound source is 64°, ${V_L}_1$ is 1564 $\frac{m}{s}$ and ${V_L}_2$ is 1494 $\frac{m}{s}$.
+
+```{r Snells1}
+snell(64,1564,1494)
+```
+
+* The reflection angle is 61.14°. 
+
+2. Calculate the refraction angle given the angle of a Dixie Valley toad sound source is 15.5°, ${V_L}_1$ is 1493 $\frac{m}{s}$ and ${V_L}_2$ is 1502 $\frac{m}{s}$.
+
+```{r Snells2}
+snell(15.5,1493,1502)
+```
+
+* The refraction angle is 15.593°. 
+
+### Sound Absorption, Impedance, Pressure, and Intensity
+
+
+Sound absorption is the energy dissipation through a medium or the total transmission loss of sound from a source to a receiver. The transmission loss is impacted by the same factors impacting the speed of sound in each medium. 
+
+Regarding absorption in air, the factors to take into consideration are the frequency of the sound source, ambient temperature, pressure, and relative humidity (if curious about how each of these paramters independently affects sound pressure, explore this interactive plot developed by Daniel Russel at Pennsylvania State University)[Figure](https://www.acs.psu.edu/drussell/Demos/Absorption/Absorption.html). 
+
+In water, absorption is impacted by the frequency of the sound source, ambient temperature, depth, salinity and pH. Absorption is only one factor of transmission loss and more details on transmission loss are provided later, but for more information on the calculation please refer to **ISO 9613 Part 1** for sound absorption in air [@key2] and **Ainslie and McColm 1998** for sound absorption in water [@key1]. The equation pre-programmed within this package estimates absorption on average in a marine environment and thus would not be precise in estimating absorption freshwater environments. Note: There are several equations to estimate absorption in water for different ranges of predictors not functional in this package. 
+
+Impedance is the measure of resistance of a medium to wave propagation, or in other words, the willingness of a sound wave to move through a medium [@key4]. The factors that affect impedance are the medium's properties and the type of wave propagation. Water is 800 times more dense than air. Coupled with a faster speed of sound, water has an acoustic impedance approximately 3,500 times higher than that of air (for further reading, see this explained from the University of South Wales). When perceiving the effect of impedance on a sound, the modality often considered is perception. The outcome of impedance is usually an altered intensity of how the signal of interest is perceived, which will be described in greater depth with sound intensity. 
+
+The unit of specific acoustic impedance is the Rayl (Ry), which is equal to 1 $kg/(m^2s)$ or 1 $Ns/m^3$. For air, z= 428 Ry at
+20°C and z = 413 Ry at 0°C. For water, z = 14.8 MRy. We can map the relationship of impedance to the speed of the sound and density of the medium: 
+
+$$ z = c * \rho $$
+
+* $z$ is the impedance in rayl or $\frac{kg}{m^2}$
+* $c$ is the speed of sound in $\frac{m}{s}$
+* $\rho$ is the density of the medium in $\frac{kg}{m^3}$
+
+Sound pressure is the average local pressure deviation from the surrounding pressure of the medium. In the case of bioacoustics, sound pressure is how the pressure of the vocalization of interest alters the average sound pressure of the surrounding ecosystem. We can measure the sound pressure (pressure root mean square) from either simulated sine wave representations of sound waves $Prms = P_{zero2peak}/\sqrt{2}$ or, more typically, by averaging the absolute pressure measurements $Prms = \sqrt{(P^2)_{average}}$. Below is a simulated sine wave representation to give you an understanding of $P_{zero2peak}$(blue) and $P_{peak2peak}$(red)[@key5]:
+
+```{r sine graph, echo=FALSE, fig.align = 'center'}
+#simulated sine sound wave
+t=seq(0,4*pi,0.1)
+y=2*sin(t)
+s <- as.data.frame(cbind(t,y), ncol=2)
+
+ggplot2::ggplot(s, ggplot2::aes(t,y))+
+  ggplot2::geom_line()+
+  ggplot2::geom_hline(yintercept=0, 
+                      size=1) + 
+  ggplot2::geom_segment(ggplot2::aes(x = pi/2, y = 0, xend = pi/2, yend = 2),
+                  arrow = grid::arrow(length = grid::unit(0.25, "cm")), 
+                  color = "blue") +
+  ggplot2::geom_segment(ggplot2::aes(x = 5*pi/2, y = 0, xend = 5*pi/2, yend = 2),
+                  arrow = grid::arrow(length = grid::unit(0.25, "cm")), 
+                  color = "red") +
+  ggplot2::geom_segment(ggplot2::aes(x = 5*pi/2, y = 0, xend = 5*pi/2, yend = -2),
+                  arrow = grid::arrow(length = grid::unit(0.25, "cm")), 
+                  color = "red") +
+  ggplot2::theme(panel.grid.major = ggplot2::element_blank(), 
+                 panel.grid.minor = ggplot2::element_blank(), 
+                 panel.background = ggplot2::element_blank(), 
+                 axis.text.x = ggplot2::element_blank(), 
+                 axis.ticks.x = ggplot2::element_blank())+
+  ggplot2::ylab(expression("Pressure (" * mu ~ "Pa)"))+
+  ggplot2::xlab("")
+  
+```
+
+Finally, the sound intensity can be measured by the relationship between pressure and the impedance. Therefore, the definition of intensity of sound is the average amount of energy transmitted per unit time through a unit area in a specified direction. The acoustic impedance of water is 3,500 times higher than in air, meaning a specific sound produced in air would be 3,500 times less intense if instead produced in water. Further, if two different sounds in water and air were estimated to have the same intensity, the sound prouced in air would have much smaller pressure, since speed of sound is held relatively constant for each environment [@key6;@key7]. The relationship between impedance and pressure can be represented as the following:
+
+$$ Sound \;intensity = sound \;pressure * particle \;velocity$$
+$$ I = \frac{P_{rms}^2}{z}$$
+* $I$ is the intensity of sound in $\frac{W}{m^2}$
+
+#### Excercises
+
+1. A call of the rarest beaked whale, the spade-toothed beaked whale (_Mesoplodon traversii_), has never been confirmed via scientific literature. What would be the absorption coefficient of a possible spade-toothed beaked whale call at 48kHz, a average salinity of 34ppt, a temperature of 18°C, a pH of 7.75, and estimated average depth of 2km?
+
+```{r absorption1}
+absorptionWater(48,7.75,18,34,2)
+```
+
+* The absorption of the call would be 9.434 $\frac{dB}{km}$. 
+
+2. The land lobster (_Dryococelus australis_), was a thought-to-be extinct insect in 1920 but was rediscovered in 2001. It is thought these insects make a small squeak noise when threatened. What would be the absorption coefficient with a call at 10 kHz, standard pressure, 20°C, and 99% humidity? 
+
+```{r absorption2}
+absorptionAir(10000,101.325,20,99)
+```
+
+* The absorption of the call would be 0.089 $\frac{dB}{m}$. 
+
+
+3. A vector of hypothetical pressure values is given to you for a defensive call from a mangrove whiptail (_Himantura granulate_). Recorded in the Indo-Pacific, the call was produced at 24 kHz. What was the intensity of the sound?
+
+```{r impedance}
+#Assume standard impedance in water
+z <- 14.8
+
+#pressure values for example
+press <- c(20, 24, 18, 34, 51, 29, 29, 15)
+
+#pressure root mean square of pressure values
+prms <- sqrt(mean(press^2))
+
+#Formula for impedance
+prms^2/z
+
+```
+
+* The intensity of the call would be 58.818 $\frac{W}{m^2}$. 
+
+### References
+
+
+

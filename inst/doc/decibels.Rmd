@@ -1,0 +1,103 @@
+---
+title: "Decibels: What's the Reference?"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Decibels: What's the Reference?}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+author: Matthew Duggan
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The bioSNR package is an open-source SONAR equation calculator. The calculator is capable of handling simple to intermediate level acoustic problems associated with bioacoustics and passive acoustic monitoring (PAM) systems. 
+
+This document gives quick examples of bioSNR's capabilities with dB operations. 
+
+```{r setup, eval=FALSE}
+#Stable - Install package from CRAN 
+install.packages("bioSNR")
+
+#Unstable - Install package from Github repository 
+devtools::install_github("MattyD797/bioSNR")
+
+#Attach package namespace to active libraries in Rstudio
+library(bioSNR)
+```
+
+```{r setupR, eval=TRUE, include=FALSE}
+library(bioSNR)
+```
+
+
+### decibel
+
+The decibel (dB) is the logarithmic ratio between a common metric of sound (e.g., power, intensity, pressure) and its corresponding reference level. No matter the reference chosen, the formula used to calculate dBs remains the same and is adapted from the unit Bell or $Bel=\log_{10}(\frac{Power_2}{Power_1})$. Below are the specific equations for the three common metrics of sound (power, intensity, or pressure, respectively):
+
+$$ dB\:re\:W_{ref}=10\log_{10}(\frac{W}{W_{ref}})  $$
+$$ dB\:re\:I_{ref}=10\log_{10}(\frac{I}{I_{ref}})  $$
+$$ dB\:re\:P_{ref}=10\log_{10}(\frac{P^2}{P_{ref}^2})\;\; |\;\;dB\:re\:P_{ref}=20\log_{10}(\frac{P}{P_{ref}})  $$
+
+* $W$ is power in $W$.
+* $I$ is intensity in $\frac{W}{m^2}$. 
+* $P$ is the pressure in $\mu Pa$
+
+When reporting back dB values, it is important to always label the value with the correct reference level, which is primarily decided upon by the ecosystem the sound value is calculated in (e.g., air, water). The common reference levels that are always IMPORTANT to show are in the table below:
+
+```{r referenceTable, echo=FALSE}
+ref <- data.frame(row.names = c("Air", "Water"))
+ref[,1] <- c("$20\\: \\mu Pa$", "$1\\: \\mu Pa$")
+ref[,2] <- c("$1*10^{-12}\\: W/m^2$", "$6.7*10^{-19}\\: W/m^2$")
+ref[,3] <- c("$1*10^{-12}\\: W$", "$6.7*10^{-19}\\: W$")
+colnames(ref) <- c("Pressure", "Intensity", "Power")
+t <- knitr::kable(ref,align=c(rep('c',times=3)), format = "html") 
+t
+```
+If you need to compute a bioacoustics calculation in a pinch,, these are important relationships to keep in mind that may be helpful for a back-of-the-envelope dB calculation (notice how we need to increase dB by 10 to double the perceived 'loudness'):
+```{r referenceTable2, echo=FALSE}
+ref <- data.frame(row.names = c("1", "2", "3", "4", "5"))
+ref[,1] <- c("dBs", "$+3$", "$+6$", "$+10$", "$+20$" )
+ref[,2] <- c("Pressure", "$1.41*$", "$2*$", "$3.16*$", "$10*$" )
+ref[,3] <- c("Intensity", "$2*$", "$4*$", "$10*$", "$100*$" )
+ref[,4] <- c("Power", "$2*$", "$4*$", "$10*$", "$100*$" )
+ref[,5] <- c("'Loudness'", "$1.23*$", "$1.52*$", "$2*$", "$4*$" )
+t <- knitr::kable(ref,align=c(rep('c',times=5)), format = "html", col.names = NULL) 
+t
+```
+
+Say you are interested in playing an excerpt from your favorite radio hit both underwater and in air (of course, we don’t recommend this without the right permits!) If you wanted the song to be heard underwater at the same dB level you played it in air, you would need to increase the dB level by 61.5 dBs. This is due to different reference levels and impedances between the two ecosystems. Differences in reference levels account for 26 dB, and differences in impedances account for 35.5 dB, in total amounting to 61.5 dBs.
+
+$waterdB - 61.5 = airdB$
+
+Simple operations with dBs are performed in three steps: calculating linear values, add/subtract these linear values, and convert back to dB-s (a logarithmic value). We can write out this operation as below:
+
+1. $raw\;values = 10^{measurement/X}*ref\;level$
+2. $Add/Subtract$
+3. $dB\;value = X*log_{10}(measurement/ref\;level)$
+
+* $X$ is 20 (pressure) or 10 (intensity, power)
+
+Since comparing dBs can be more complicated than performing simple operations, the bioSNR package makes adding, subtracting, and averaging relatively simple and streamlined with just a single function. 
+
+#### Examples
+
+1. Given some source level measurements of the Galápagos penguin (_Spheniscus mendiculus_), you want to average them to get an idea on how many recorders you will need to record. Here are your measurements dB re $1\:\mu Pa$: 34, 57, 48, 66, 80, 55.
+
+```{r opDB1}
+opDB(c(34, 57, 48, 66, 80, 55), 20, op="avg")
+```
+
+* 67.087 dB re $1\:\mu Pa$ is the average source level. This means you will need to take this number into consideration when considering your noise level out in the field for how far your recorders can be from an individual making a call.
+
+2. A lab assignment for your bioacoustics course asks you to add up given source level measurements. You have just heard about the bioSNR package and are up for hee task. Here are your measurements dB re $1*10^{-12} \frac{W}{m^2}$: 18, 27, 12, 22, 5, 50. Compute the total dB value value of the measurements using your go-to bioSNR function for the task!
+
+```{r opDB2}
+opDB(c(18, 27, 12, 22, 5, 50), 10, op="add")
+```
+
+* 50.032 dB re $1*10^{-12} \frac{W}{m^2}$

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Matthew Duggan" />
+
+
+<title>bioSNR: An Introduction to the Physics Behind Bioacoustics</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">bioSNR: An Introduction to the Physics
+Behind Bioacoustics</h1>
+<h4 class="author">Matthew Duggan</h4>
+
+
+
+<p>The bioSNR package is an open-source solver of the passive SOund
+NAvigation and Ranging (SONAR) equation. The calculator is capable of
+handling simple-level acoustic problems associated with bioacoustics and
+passive acoustic monitoring (PAM) systems.</p>
+<p>This document gives quick examples of bioSNR’s more basic
+capabilities and functions while introducing some of the basic physics
+behind sound.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Stable - Install package from CRAN </span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;bioSNR&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Unstable - Install package from Github repository </span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;MattyD797/bioSNR&quot;</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#Attach package namespace to active libraries in Rstudio</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bioSNR)</span></code></pre></div>
+<div id="sound-wave-frequency-and-wavelength" class="section level3">
+<h3>Sound wave: frequency and wavelength</h3>
+<p>A acoustic wave is a mechanical wave with longitudinal propagation.
+It means that under the influence of a wave (e.g., issued from a sound
+source) the particles of a medium (e.g. air, water) oscillate parallel
+to the direction of propagation of the wave, propagating the
+perturbation. This movement of particles results in repeated patterns of
+<em>compression</em> and <em>dilatation</em> around the value of ambient
+pressure, resulting in a travelling pressure wave <span class="citation">(Klinck 2022)</span>. Along with the majority of
+organisms, our hearing is based on these pressure changes, but some
+species (mainly fish and squid) rely on the motion of the particles.
+Therefore, we typically only measure sounds through small pressure
+changes, in Pascals (Pa).</p>
+<p>For simplicity we often describe acoustics variables in relation with
+the illustration of sinusoid, the simplest waveform, where this
+oscillation exist both in space (for simplicity along one dimension) and
+in time. The period is the time interval between the successive
+occurrence of the same state in this oscillation. The frequency, (or
+pitch) is the number oscillations produced in one second represented by
+the unit Hertz (Hz). In reference to human hearing range, sound with a
+frequency below 20 Hz is <em>infrasound</em> and sound above 20kHz is
+<em>ultrasound</em>. The wavelength is the distance between successive
+crests if a wave and is measured in meters (m).</p>
+<p>The relationship between the length of a wavelength and the frequency
+can be represented as</p>
+<p><span class="math display">\[\lambda = \frac{c}{f}\]</span>, where, *
+<span class="math inline">\(\lambda\)</span> is the wavelength (m), *
+<span class="math inline">\(c\)</span> is speed of sound in (m/s) and, *
+<span class="math inline">\(f\)</span> frequency in Hz (cycles per
+second).</p>
+<p>By using this equation, the wof() function allows you to calculate
+either <span class="math inline">\(\lambda\)</span> or the <span class="math inline">\(f\)</span>. — whichever your value of interest is.
+The first entry defaults to either <span class="math inline">\(\lambda\)</span> or <span class="math inline">\(f\)</span> — whichever value you already have. In
+the second position, you must set the c argument equal to the constant
+of sound speed in water or air.</p>
+<p>You may calculate your own value for c relative to the conditions
+present in your ecosystem of study. As a general rule of thumb, however,
+c is equal to 1500 m/s in saltwater and 350 m/s in air. Note that the
+distinction between freshwater and saltwater is important. Sound speed
+is faster in saltwater than freshwater.</p>
+<div id="examples" class="section level4">
+<h4>Examples</h4>
+<ol style="list-style-type: decimal">
+<li>Toothed whales like dolphins often use ultrasonic signals for a
+range of important behaviors, such as communication. What is the
+wavelength of a false killer whale broadband click at 40 kHz?</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Find the wavelength (m) given a sound level of 75 kHz (75000 Hz) in SALTWATER</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">wof</span>(<span class="dv">40000</span>, <span class="at">c=</span><span class="dv">15000</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.375</span></span></code></pre></div>
+<ul>
+<li>The wavelength is 0.375 m.</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>Bats produce ultrasonic sounds to find prey, such as the invasive
+mosquito. What is the frequency of a sheath-tailed bat echolocation that
+has a wavelength of 0.012?</li>
+</ol>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Find the frequency (Hz) given a wavelength of 0.015 in AIR</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">wof</span>(<span class="fl">0.012</span>, <span class="at">c=</span><span class="dv">350</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 29166.67</span></span></code></pre></div>
+<ul>
+<li>The frequency is ~29 kHz.</li>
+</ul>
+</div>
+</div>
+<div id="speed-of-sound" class="section level3">
+<h3>Speed of Sound</h3>
+<p>While a sound wave travels similarly no matter its medium, different
+media still have different physical properties that alter the wave’s
+speed. The speed of a wave is influenced dynamic ecosystem conditions.
+In air, the parameters that influence sound speed are temperature,
+humidity, and wind speed. In water, the parameters are temperature,
+depth, and salinity. Nonetheless, on average, sound travels ~340 <span class="math inline">\(\frac{m}{s}\)</span> in air and ~1500 <span class="math inline">\(\frac{m}{s}\)</span> in salt water.</p>
+<p>The formula to find sound speed in the <em>ocean</em> <span class="citation">(Wilson 1960)</span> is</p>
+<p><span class="math display">\[ c = 1449.2 + 4.6t – 0.055t^2 +
+0.00029t^3 + (1.34-0.010t) * (s-35) + 0.0165z \]</span> where, * <span class="math inline">\(c\)</span> is sound speed in <span class="math inline">\(\frac{m}{s}\)</span> * <span class="math inline">\(t\)</span> is temperature in °C * <span class="math inline">\(s\)</span> is salinity in parts per thousand (ppt)
+* <span class="math inline">\(z\)</span> is depth in m</p>
+<p>The formula to find sound speed in <em>air</em> is</p>
+<p><span class="math display">\[ c = 331 + 0.6t \]</span> where, * <span class="math inline">\(c\)</span> is sound speed in <span class="math inline">\(\frac{m}{s}\)</span> * <span class="math inline">\(t\)</span> is temperature in °C</p>
+<p>The first entry corresponds to temperature. The second entry, either
+denote “water” or “air” for sound speed default. The third entry
+corresponds to salinity, while the fourth entry corresponds to
+depth.</p>
+<div id="example" class="section level4">
+<h4>Example</h4>
+<ol style="list-style-type: decimal">
+<li>How does the speed of airborne sound compare between Hawai’i (23°C)
+and a polar-like region, such as Ithaca, NY (3°C)?</li>
+</ol>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Speed of sound in air at 23°C </span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">soundSpeed</span>(<span class="dv">23</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 344.8</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Speed of sound in air at 3°C </span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">soundSpeed</span>(<span class="dv">3</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 332.8</span></span></code></pre></div>
+<ul>
+<li>In air, sound is 12 <span class="math inline">\(\frac{m}{s}\)</span>
+faster in Hawai’i (23°C) compared to Ithaca, NY (3°C).</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>How fast will a black durgon warning call travel in 30°C water with
+a salinity of 35 ppt and a depth of 10 meters?</li>
+</ol>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Speed of fish sound in saltwater</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">soundSpeed</span>(<span class="dv">30</span>, <span class="st">&quot;water&quot;</span>, <span class="dv">35</span>, <span class="dv">10</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1545.695</span></span></code></pre></div>
+<ul>
+<li>In water, the call will travel at the speed of 1545.695 <span class="math inline">\(\frac{m}{s}\)</span>.</li>
+</ul>
+</div>
+</div>
+<div id="sound-reflection-transmission-and-refraction" class="section level3">
+<h3>Sound Reflection, Transmission, and Refraction</h3>
+<p>As a sound wave travels through a medium, it will be dynamically
+reflected and refracted. Reflection is like a ball bouncing off the
+ground in which the energy of a sound is directed into another direction
+by an object. Sound enters water from air at the critical angle of 15°
+at the air-water boundary – or the place where the surface of water
+meets air. Refraction is when sound changes speed after crossing into a
+different medium, such as when a sound from air enters the water.
+Refraction can also occur when sound changes speed in a medium with
+varying conditions, such as when temperature shifts through the water
+column in the ocean. The angle and longitudinal wave velocity of this
+new direction from reflection can be calculated utilizing Snell’s law,
+where reflection angle is represented as <span class="math inline">\(\Theta_1\)</span> and refraction angle is
+represented as <span class="math inline">\(\Theta_2\)</span>:</p>
+<p><span class="math display">\[ \frac{\sin\Theta_1}{{V_L}_1} =
+\frac{\sin\Theta_2}{{V_L}_2} \]</span> where, * <span class="math inline">\(c_1\)</span> and <span class="math inline">\(c_2\)</span> are the sounds speeds in medium 1 and
+2 given in <span class="math inline">\(\frac{m}{s}\)</span> * <span class="math inline">\(theta_1\)</span> and <span class="math inline">\(theta_2\)</span> are the angles of incidence and
+refraction in °</p>
+<div id="examples-1" class="section level4">
+<h4>Examples</h4>
+<ol style="list-style-type: decimal">
+<li>Calculate the reflection angle given the angle of a black-tailed
+godwit sound source is 64°, <span class="math inline">\({V_L}_1\)</span>
+is 1564 <span class="math inline">\(\frac{m}{s}\)</span> and <span class="math inline">\({V_L}_2\)</span> is 1494 <span class="math inline">\(\frac{m}{s}\)</span>.</li>
+</ol>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">snell</span>(<span class="dv">64</span>,<span class="dv">1564</span>,<span class="dv">1494</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 61.13555</span></span></code></pre></div>
+<ul>
+<li>The reflection angle is 61.14°.</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>Calculate the refraction angle given the angle of a Dixie Valley
+toad sound source is 15.5°, <span class="math inline">\({V_L}_1\)</span>
+is 1493 <span class="math inline">\(\frac{m}{s}\)</span> and <span class="math inline">\({V_L}_2\)</span> is 1502 <span class="math inline">\(\frac{m}{s}\)</span>.</li>
+</ol>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">snell</span>(<span class="fl">15.5</span>,<span class="dv">1493</span>,<span class="dv">1502</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 15.59344</span></span></code></pre></div>
+<ul>
+<li>The refraction angle is 15.593°.</li>
+</ul>
+</div>
+</div>
+<div id="sound-absorption-impedance-pressure-and-intensity" class="section level3">
+<h3>Sound Absorption, Impedance, Pressure, and Intensity</h3>
+<p>Sound absorption is the energy dissipation through a medium or the
+total transmission loss of sound from a source to a receiver. The
+transmission loss is impacted by the same factors impacting the speed of
+sound in each medium.</p>
+<p>Regarding absorption in air, the factors to take into consideration
+are the frequency of the sound source, ambient temperature, pressure,
+and relative humidity (if curious about how each of these paramters
+independently affects sound pressure, explore this interactive plot
+developed by Daniel Russel at Pennsylvania State University)<a href="https://www.acs.psu.edu/drussell/Demos/Absorption/Absorption.html">Figure</a>.</p>
+<p>In water, absorption is impacted by the frequency of the sound
+source, ambient temperature, depth, salinity and pH. Absorption is only
+one factor of transmission loss and more details on transmission loss
+are provided later, but for more information on the calculation please
+refer to <strong>ISO 9613 Part 1</strong> for sound absorption in air
+<span class="citation">(Acoustics 1996)</span> and <strong>Ainslie and
+McColm 1998</strong> for sound absorption in water <span class="citation">(Ainslie and McColm 1998)</span>. The equation
+pre-programmed within this package estimates absorption on average in a
+marine environment and thus would not be precise in estimating
+absorption freshwater environments. Note: There are several equations to
+estimate absorption in water for different ranges of predictors not
+functional in this package.</p>
+<p>Impedance is the measure of resistance of a medium to wave
+propagation, or in other words, the willingness of a sound wave to move
+through a medium <span class="citation">(<em>Acoustic Impedance</em>
+2009)</span>. The factors that affect impedance are the medium’s
+properties and the type of wave propagation. Water is 800 times more
+dense than air. Coupled with a faster speed of sound, water has an
+acoustic impedance approximately 3,500 times higher than that of air
+(for further reading, see this explained from the University of South
+Wales). When perceiving the effect of impedance on a sound, the modality
+often considered is perception. The outcome of impedance is usually an
+altered intensity of how the signal of interest is perceived, which will
+be described in greater depth with sound intensity.</p>
+<p>The unit of specific acoustic impedance is the Rayl (Ry), which is
+equal to 1 <span class="math inline">\(kg/(m^2s)\)</span> or 1 <span class="math inline">\(Ns/m^3\)</span>. For air, z= 428 Ry at 20°C and z
+= 413 Ry at 0°C. For water, z = 14.8 MRy. We can map the relationship of
+impedance to the speed of the sound and density of the medium:</p>
+<p><span class="math display">\[ z = c * \rho \]</span></p>
+<ul>
+<li><span class="math inline">\(z\)</span> is the impedance in rayl or
+<span class="math inline">\(\frac{kg}{m^2}\)</span></li>
+<li><span class="math inline">\(c\)</span> is the speed of sound in
+<span class="math inline">\(\frac{m}{s}\)</span></li>
+<li><span class="math inline">\(\rho\)</span> is the density of the
+medium in <span class="math inline">\(\frac{kg}{m^3}\)</span></li>
+</ul>
+<p>Sound pressure is the average local pressure deviation from the
+surrounding pressure of the medium. In the case of bioacoustics, sound
+pressure is how the pressure of the vocalization of interest alters the
+average sound pressure of the surrounding ecosystem. We can measure the
+sound pressure (pressure root mean square) from either simulated sine
+wave representations of sound waves <span class="math inline">\(Prms =
+P_{zero2peak}/\sqrt{2}\)</span> or, more typically, by averaging the
+absolute pressure measurements <span class="math inline">\(Prms =
+\sqrt{(P^2)_{average}}\)</span>. Below is a simulated sine wave
+representation to give you an understanding of <span class="math inline">\(P_{zero2peak}\)</span>(blue) and <span class="math inline">\(P_{peak2peak}\)</span>(red)<span class="citation">(<span>“Introduction to Signal Levels”</span>
+2019)</span>:</p>
+<pre><code>#&gt; Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+#&gt; ℹ Please use `linewidth` instead.
+#&gt; This warning is displayed once every 8 hours.
+#&gt; Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#&gt; generated.</code></pre>
+<p><img src="data:image/png;base64,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" style="display: block; margin: auto;" /></p>
+<p>Finally, the sound intensity can be measured by the relationship
+between pressure and the impedance. Therefore, the definition of
+intensity of sound is the average amount of energy transmitted per unit
+time through a unit area in a specified direction. The acoustic
+impedance of water is 3,500 times higher than in air, meaning a specific
+sound produced in air would be 3,500 times less intense if instead
+produced in water. Further, if two different sounds in water and air
+were estimated to have the same intensity, the sound prouced in air
+would have much smaller pressure, since speed of sound is held
+relatively constant for each environment <span class="citation">(<span>“Acoustic Impedance, Intensity and
+Power,”</span> n.d.; <span>“Sound Intensity,”</span> n.d.)</span>. The
+relationship between impedance and pressure can be represented as the
+following:</p>
+<p><span class="math display">\[ Sound \;intensity = sound \;pressure *
+particle \;velocity\]</span> <span class="math display">\[ I =
+\frac{P_{rms}^2}{z}\]</span> * <span class="math inline">\(I\)</span> is
+the intensity of sound in <span class="math inline">\(\frac{W}{m^2}\)</span></p>
+<div id="excercises" class="section level4">
+<h4>Excercises</h4>
+<ol style="list-style-type: decimal">
+<li>A call of the rarest beaked whale, the spade-toothed beaked whale
+(<em>Mesoplodon traversii</em>), has never been confirmed via scientific
+literature. What would be the absorption coefficient of a possible
+spade-toothed beaked whale call at 48kHz, a average salinity of 34ppt, a
+temperature of 18°C, a pH of 7.75, and estimated average depth of
+2km?</li>
+</ol>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">absorptionWater</span>(<span class="dv">48</span>,<span class="fl">7.75</span>,<span class="dv">18</span>,<span class="dv">34</span>,<span class="dv">2</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 9.433558</span></span></code></pre></div>
+<ul>
+<li>The absorption of the call would be 9.434 <span class="math inline">\(\frac{dB}{km}\)</span>.</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>The land lobster (<em>Dryococelus australis</em>), was a
+thought-to-be extinct insect in 1920 but was rediscovered in 2001. It is
+thought these insects make a small squeak noise when threatened. What
+would be the absorption coefficient with a call at 10 kHz, standard
+pressure, 20°C, and 99% humidity?</li>
+</ol>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">absorptionAir</span>(<span class="dv">10000</span>,<span class="fl">101.325</span>,<span class="dv">20</span>,<span class="dv">99</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.0885461</span></span></code></pre></div>
+<ul>
+<li>The absorption of the call would be 0.089 <span class="math inline">\(\frac{dB}{m}\)</span>.</li>
+</ul>
+<ol start="3" style="list-style-type: decimal">
+<li>A vector of hypothetical pressure values is given to you for a
+defensive call from a mangrove whiptail (<em>Himantura granulate</em>).
+Recorded in the Indo-Pacific, the call was produced at 24 kHz. What was
+the intensity of the sound?</li>
+</ol>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Assume standard impedance in water</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>z <span class="ot">&lt;-</span> <span class="fl">14.8</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">#pressure values for example</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>press <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">20</span>, <span class="dv">24</span>, <span class="dv">18</span>, <span class="dv">34</span>, <span class="dv">51</span>, <span class="dv">29</span>, <span class="dv">29</span>, <span class="dv">15</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co">#pressure root mean square of pressure values</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>prms <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>(press<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co">#Formula for impedance</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>prms<span class="sc">^</span><span class="dv">2</span><span class="sc">/</span>z</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 58.81757</span></span></code></pre></div>
+<ul>
+<li>The intensity of the call would be 58.818 <span class="math inline">\(\frac{W}{m^2}\)</span>.</li>
+</ul>
+</div>
+</div>
+<div id="references" class="section level3 unnumbered">
+<h3 class="unnumbered">References</h3>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-key4" class="csl-entry">
+<em>Acoustic Impedance</em>. 2009. University of Wisconsin Stevens
+Point; Lippincott Williams &amp; Wilkins.
+</div>
+<div id="ref-key6" class="csl-entry">
+<span>“Acoustic Impedance, Intensity and Power.”</span> n.d.
+<em>Acoustic Impedance and Intensity: From Physclips Waves and
+Sound</em>. UNSW School of Physics Sydney Australia. <a href="https://www.animations.physics.unsw.edu.au/jw/sound-impedance-intensity.htm">https://www.animations.physics.unsw.edu.au/jw/sound-impedance-intensity.htm</a>.
+</div>
+<div id="ref-key2" class="csl-entry">
+Acoustics, ISO. 1996. <span>“Attenuation of Sound During Propagation
+Outdoors.”</span> <em>Markham, ON: ISO</em> 533: 1–8.
+</div>
+<div id="ref-key1" class="csl-entry">
+Ainslie, Michael A, and James G McColm. 1998. <span>“A Simplified
+Formula for Viscous and Chemical Absorption in Sea Water.”</span>
+<em>The Journal of the Acoustical Society of America</em> 103 (3):
+1671–72.
+</div>
+<div id="ref-key5" class="csl-entry">
+<span>“Introduction to Signal Levels.”</span> 2019. <em>Discovery of
+Sound in the Sea</em>. University of Rhode Island; Inner Space Center.
+<a href="https://dosits.org/science/advanced-topics/introduction-to-signal-levels/">https://dosits.org/science/advanced-topics/introduction-to-signal-levels/</a>.
+</div>
+<div id="ref-key3" class="csl-entry">
+Klinck, Holger. 2022. <span>“The Science of Sound.”</span> K. Lisa Yang
+Center for Conersvation Bioacoustics; Cornell University Lecture.
+</div>
+<div id="ref-key7" class="csl-entry">
+<span>“Sound Intensity.”</span> n.d. <em>Siemens</em>. Siemens Digital
+Industries Software. <a href="https://community.sw.siemens.com/s/article/Sound-Intensity">https://community.sw.siemens.com/s/article/Sound-Intensity</a>.
+</div>
+<div id="ref-key8" class="csl-entry">
+Wenz, Gordon M. 1962. <span>“Acoustic Ambient Noise in the Ocean:
+Spectra and Sources.”</span> <em>The Journal of the Acoustical Society
+of America</em>. Acoustical Society of America.
+</div>
+<div id="ref-key9" class="csl-entry">
+Wilson, Wayne D. 1960. <span>“Equation for the Speed of Sound in Sea
+Water.”</span> <em>The Journal of the Acoustical Society of America</em>
+32 (10): 1357–57.
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
